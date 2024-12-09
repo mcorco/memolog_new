@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "89543923187",
-    "project_id": "memolog-new",
-    "storage_bucket": "memolog-new.firebasestorage.app"
+    "project_number": "68557651466",
+    "project_id": "memolog-5d8cc",
+    "storage_bucket": "memolog-5d8cc.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:89543923187:android:2b4107925ef8954ad86e86",
+        "mobilesdk_app_id": "1:68557651466:android:f40b276b80281d46c5e9f3",
         "android_client_info": {
           "package_name": "com.memolog.new"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAvMSuwJ3i529ZVejAJmzzoRFTSrBiSwvY"
+          "current_key": "AIzaSyDuJVKjYZ8wdddXCh-F-RrRO5krrfFSdoQ"
         }
       ],
       "services": {

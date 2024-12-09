@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class EditDiaryEntryPage extends StatefulWidget {
   final String documentId;
@@ -7,14 +8,13 @@ class EditDiaryEntryPage extends StatefulWidget {
   final String content;
 
   const EditDiaryEntryPage({
-    super.key, // Add a key parameter
+    super.key,
     required this.documentId,
     required this.title,
     required this.content,
-  }); // Call the superclass constructor with the key
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
   _EditDiaryEntryPageState createState() => _EditDiaryEntryPageState();
 }
 
@@ -30,16 +30,28 @@ class _EditDiaryEntryPageState extends State<EditDiaryEntryPage> {
   }
 
   Future<void> updateEntry() async {
-    await FirebaseFirestore.instance.collection('diaryEntries').doc(widget.documentId).update({
-      'title': titleController.text,
-      'content': contentController.text,
-      'date': DateTime.now().toIso8601String(), // Update date to current time
-    });
+    try {
+      // Format the date as dd.MM.yyyy GMT
+      String formattedDate = DateFormat('dd.MM.yyyy').format(DateTime.now()) + " GMT";
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Entry updated successfully!')),
-      );
+      // Update the Firestore document
+      await FirebaseFirestore.instance.collection('diaryEntries').doc(widget.documentId).update({
+        'title': titleController.text,
+        'content': contentController.text,
+        'date': formattedDate,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Entry updated successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating entry: $e')),
+        );
+      }
     }
   }
 

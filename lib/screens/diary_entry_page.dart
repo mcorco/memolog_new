@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:async';
+import 'package:intl/intl.dart';
 
 class DiaryEntryPage extends StatefulWidget {
   final DateTime selectedDate;
 
-  const DiaryEntryPage({super.key, required this.selectedDate});
+  const DiaryEntryPage({Key? key, required this.selectedDate}) : super(key: key);
 
   @override
-  DiaryEntryPageState createState() => DiaryEntryPageState();
+  _DiaryEntryPageState createState() => _DiaryEntryPageState();
 }
-class DiaryEntryPageState extends State<DiaryEntryPage> {
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController contentController = TextEditingController();
-  List<XFile> images = [];
-  String? documentId;
+
+class _DiaryEntryPageState extends State<DiaryEntryPage> {
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
+  bool _isUpdateMode = false;
+  String _confirmationMessage = '';
 
   @override
   void initState() {
@@ -25,191 +25,214 @@ class DiaryEntryPageState extends State<DiaryEntryPage> {
 
   Future<void> _loadExistingEntry() async {
     try {
-      final query = await FirebaseFirestore.instance
+      final dateKey = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
+      final docSnapshot = await FirebaseFirestore.instance
           .collection('diaryEntries')
-          .where('date',
-              isEqualTo: DateFormat("dd MMM yyyy HH:mm:ss 'GMT'")
-                  .format(widget.selectedDate))
+          .doc(dateKey)
           .get();
 
-      if (query.docs.isNotEmpty) {
-        final entry = query.docs.first;
-        documentId = entry.id;
-
-        if (mounted) {
-          setState(() {
-            titleController.text = entry['title'];
-            contentController.text = entry['content'];
-            images = (entry['images'] as List<dynamic>)
-                .map((path) => XFile(path.toString()))
-                .toList();
-          });
-        }
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data()!;
+        setState(() {
+          _titleController.text = data['title'] ?? '';
+          _contentController.text = data['content'] ?? '';
+          _isUpdateMode = true;
+        });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load entry: $e')),
-        );
-      }
+      debugPrint('Error loading entry: $e');
     }
   }
 
-  Future<void> saveOrUpdateEntry() async {
-    // Use current time for saving to make sure time is correctly recorded
-    DateTime now = DateTime.now();
-    String formattedDate = DateFormat("dd MMM yyyy HH:mm:ss 'GMT'").format(now);
-
+  Future<void> _saveOrUpdateEntry() async {
     try {
-      if (documentId == null) {
-        // Save a new entry
-        await FirebaseFirestore.instance.collection('diaryEntries').add({
-          'title': titleController.text,
-          'content': contentController.text,
-          'date': formattedDate,
-          'images': images.map((image) => image.path).toList(),
-        });
-      } else {
-        // Update the existing entry
+      final dateKey = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
+      final data = {
+        'title': _titleController.text,
+        'content': _contentController.text,
+        'date': DateFormat('dd MMM yyyy hh:mm:ss').format(DateTime.now()) + ' GMT',
+      };
+
+      if (_isUpdateMode) {
         await FirebaseFirestore.instance
             .collection('diaryEntries')
-            .doc(documentId)
-            .update({
-          'title': titleController.text,
-          'content': contentController.text,
-          'images': images.map((image) => image.path).toList(),
-        });
+            .doc(dateKey)
+            .update(data);
+      } else {
+        await FirebaseFirestore.instance
+            .collection('diaryEntries')
+            .doc(dateKey)
+            .set(data);
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Entry saved for $formattedDate')),
-        );
-
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save entry: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final List<XFile> pickedImages = await picker.pickMultiImage();
-    if (mounted) {
       setState(() {
-        images.addAll(pickedImages);
+        _isUpdateMode = true;
+        _confirmationMessage = 'Entry saved for ${data['date']}';
       });
+
+      Future.delayed(const Duration(seconds: 3), () {
+        setState(() {
+          _confirmationMessage = '';
+        });
+      });
+    } catch (e) {
+      debugPrint('Error saving entry: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Diary Entry'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10.0),
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: const Color.fromRGBO(3, 169, 244, 1), // Light baby-blue background
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 10),
+
+              // Header with Back Arrow, Title, and Date
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Diary Entry     ${DateFormat('dd MMM yyyy').format(widget.selectedDate)}",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Icon Section
+              Center(
+                child: Container(
+                  width: 140,
+                  height: 140,
                   decoration: BoxDecoration(
-                    color: const Color.fromRGBO(3, 169, 244, 1),
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  child: Text(
-                    DateFormat('dd MMM yyyy GMT').format(widget.selectedDate),
-                    style: const TextStyle(color: Colors.white, fontSize: 32),
+                    shape: BoxShape.circle,
+                    image: const DecorationImage(
+                      image: AssetImage('lib/images/leather_diary.png'),
+                      fit: BoxFit.cover,
+                    ),
+                    border: Border.all(
+                      color: Colors.lightBlueAccent,
+                      width: 4,
+                    ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    color: const Color.fromRGBO(3, 169, 244, 1),
-                    borderRadius: BorderRadius.circular(30.0),
+              ),
+              const SizedBox(height: 20),
+
+              // Title Input Field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
-                  child: StreamBuilder<DateTime>(
-                    stream: Stream.periodic(
-                        const Duration(seconds: 1), (_) => DateTime.now()),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return const Text('');
-                      }
-                      return Text(
-                        DateFormat('HH:mm:ss').format(DateTime.now()),
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 32),
-                      );
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Content Input Field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _contentController,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Content',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      // Future attach image implementation
                     },
+                    icon: const Icon(Icons.camera_alt, color: Colors.white),
+                    label: const Text(
+                      'Attach Images',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 0, 174, 239),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12.0,
+                        horizontal: 16.0,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _saveOrUpdateEntry,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 0, 174, 239),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12.0,
+                        horizontal: 40.0,
+                      ),
+                    ),
+                    child: Text(
+                      _isUpdateMode ? 'Update' : 'Save',
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+
+              // Confirmation Message
+              if (_confirmationMessage.isNotEmpty)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    padding: const EdgeInsets.all(8.0),
+                    color: Colors.black54,
+                    child: Text(
+                      _confirmationMessage,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color.fromRGBO(3, 169, 244, 1),
-                shape: BoxShape.circle,
-              ),
-              padding: const EdgeInsets.all(12.0),
-              child: IconButton(
-                icon: const Icon(Icons.add_a_photo, size: 80),
-                onPressed: pickImage,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 32),
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: contentController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                labelText: 'Content',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromRGBO(3, 169, 244, 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 20, horizontal: 50),
-              ),
-              onPressed: saveOrUpdateEntry,
-              child: Text(
-                documentId == null ? 'Save Entry' : 'Update Entry',
-                style: const TextStyle(fontSize: 20, color: Colors.white),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
-
-  // ignore: non_constant_identifier_names
-  DateFormat(String s) {}
 }
