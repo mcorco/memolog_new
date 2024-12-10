@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -21,7 +19,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       try {
         await _auth.sendPasswordResetEmail(email: email);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Password reset link has been sent to your email.")),
+          const SnackBar(
+              content: Text("Password reset link has been sent to your email.")),
         );
       } on FirebaseAuthException catch (e) {
         String errorMessage = "An error occurred, please try again.";
@@ -49,15 +48,32 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reset Password'),
-        backgroundColor: const Color.fromRGBO(3, 169, 244, 1), // Set the AppBar color
-        titleTextStyle: const TextStyle(
-          color: Colors.white,
-          fontSize: 20, // Match the font size for uniformity
-          fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60), // Set AppBar height
+        child: Container(
+          color: const Color.fromRGBO(3, 169, 244, 1), // Match AppBar color
+          child: SafeArea(
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  tooltip: 'Back',
+                ),
+                const Text(
+                  'Reset Password',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        elevation: 0,
       ),
       body: Container(
         width: double.infinity,
@@ -76,7 +92,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    image: DecorationImage(
+                    image: const DecorationImage(
                       image: AssetImage('lib/images/leather_diary.png'), // Path to your diary image
                       fit: BoxFit.cover,
                     ),
@@ -111,11 +127,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 ElevatedButton(
                   onPressed: _resetPassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 0, 174, 239), // Vibrant blue color for consistency
+                    backgroundColor:
+                        const Color.fromARGB(255, 0, 174, 239), // Vibrant blue color for consistency
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 40.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16.0, horizontal: 40.0),
                   ),
                   child: const Text(
                     'Send Reset Link',

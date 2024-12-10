@@ -41,48 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCOQthl5w2R46nYndj_FNdgMeHfWrQRN6E',
-    appId: '1:89543923187:web:447316b80c180e55d86e86',
-    messagingSenderId: '89543923187',
-    projectId: 'memolog-new',
-    authDomain: 'memolog-new.firebaseapp.com',
-    storageBucket: 'memolog-new.firebasestorage.app',
-    measurementId: 'G-7HVV1GJSYF',
+    apiKey: 'AIzaSyDuJVKjYZ8wdddXCh-F-RrRO5krrfFSdoQ',
+    appId: '1:68557651466:web:f40b276b80281d46c5e9f3',
+    messagingSenderId: '68557651466',
+    projectId: 'memolog-5d8cc',
+    authDomain: 'memolog-5d8cc.firebaseapp.com',
+    storageBucket: 'memolog-5d8cc.firebasestorage.app',
+    measurementId: '',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAvMSuwJ3i529ZVejAJmzzoRFTSrBiSwvY',
-    appId: '1:89543923187:android:2b4107925ef8954ad86e86',
-    messagingSenderId: '89543923187',
-    projectId: 'memolog-new',
-    storageBucket: 'memolog-new.firebasestorage.app',
+    apiKey: 'AIzaSyDuJVKjYZ8wdddXCh-F-RrRO5krrfFSdoQ',
+    appId: '1:68557651466:android:f40b276b80281d46c5e9f3',
+    messagingSenderId: '68557651466',
+    projectId: 'memolog-5d8cc',
+    storageBucket: 'memolog-5d8cc.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDCbeLA28mQZljqgsVPsS0MGk7nmZT-jf4',
-    appId: '1:89543923187:ios:cea621657341ac5ed86e86',
-    messagingSenderId: '89543923187',
-    projectId: 'memolog-new',
-    storageBucket: 'memolog-new.firebasestorage.app',
-    iosBundleId: 'com.example.memologNew',
+    apiKey: 'AIzaSyDuJVKjYZ8wdddXCh-F-RrRO5krrfFSdoQ',
+    appId: '1:68557651466:ios:f40b276b80281d46c5e9f3',
+    messagingSenderId: '68557651466',
+    projectId: 'memolog-5d8cc',
+    storageBucket: 'memolog-5d8cc.firebasestorage.app',
+    iosBundleId: 'com.memolog.new',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDCbeLA28mQZljqgsVPsS0MGk7nmZT-jf4',
-    appId: '1:89543923187:ios:cea621657341ac5ed86e86',
-    messagingSenderId: '89543923187',
-    projectId: 'memolog-new',
-    storageBucket: 'memolog-new.firebasestorage.app',
-    iosBundleId: 'com.example.memologNew',
+    apiKey: 'AIzaSyDuJVKjYZ8wdddXCh-F-RrRO5krrfFSdoQ',
+    appId: '1:68557651466:ios:f40b276b80281d46c5e9f3',
+    messagingSenderId: '68557651466',
+    projectId: 'memolog-5d8cc',
+    storageBucket: 'memolog-5d8cc.firebasestorage.app',
+    iosBundleId: 'com.memolog.new',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCOQthl5w2R46nYndj_FNdgMeHfWrQRN6E',
-    appId: '1:89543923187:web:301aefda454c9a6cd86e86',
-    messagingSenderId: '89543923187',
-    projectId: 'memolog-new',
-    authDomain: 'memolog-new.firebaseapp.com',
-    storageBucket: 'memolog-new.firebasestorage.app',
-    measurementId: 'G-MD54ZZT6X6',
+    apiKey: 'AIzaSyDuJVKjYZ8wdddXCh-F-RrRO5krrfFSdoQ',
+    appId: '1:68557651466:web:f40b276b80281d46c5e9f3',
+    messagingSenderId: '68557651466',
+    projectId: 'memolog-5d8cc',
+    authDomain: 'memolog-5d8cc.firebaseapp.com',
+    storageBucket: 'memolog-5d8cc.firebasestorage.app',
+    measurementId: '',
   );
 }

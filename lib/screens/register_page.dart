@@ -22,7 +22,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (email.isNotEmpty && password.isNotEmpty) {
       try {
-        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        UserCredential userCredential =
+            await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
@@ -61,36 +62,52 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Register with MemoLog',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60), // Consistent AppBar height
+        child: Container(
+          color: const Color.fromRGBO(3, 169, 244, 1), // Matches AppBar color
+          child: SafeArea(
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  tooltip: 'Back',
+                ),
+                const Text(
+                  'Register with MemoLog',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        backgroundColor: const Color.fromRGBO(3, 169, 244, 1),
-        elevation: 0,
       ),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: const Color.fromRGBO(3, 169, 244, 1),
+        color: const Color.fromRGBO(3, 169, 244, 1), // Matches background color
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start, // Align content to top
               children: [
-                // Diary Icon Image
+                const SizedBox(height: 40), // Add spacing for content
+                // Diary Icon
                 Container(
                   width: 160,
                   height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: AssetImage('lib/images/leather_diary.png'), // Path to your diary image
+                    image: const DecorationImage(
+                      image: AssetImage('lib/images/leather_diary.png'),
                       fit: BoxFit.cover,
                     ),
                     border: Border.all(
@@ -143,13 +160,18 @@ class _RegisterPageState extends State<RegisterPage> {
                 ElevatedButton(
                   onPressed: _register,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 0, 174, 239), // Vibrant blue color for the button
+                    backgroundColor:
+                        const Color.fromARGB(255, 0, 174, 239), // Vibrant blue
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 40.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16.0, horizontal: 40.0),
                   ),
-                  child: const Text('Register', style: TextStyle(fontSize: 18, color: Colors.white)),
+                  child: const Text(
+                    'Register',
+                    style: TextStyle(fontSize: 18, color: Colors.white),
+                  ),
                 ),
               ],
             ),

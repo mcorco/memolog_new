@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
       if (docSnapshot.exists) {
         final data = docSnapshot.data();
         setState(() {
-          _firestoreTestResult = 'Firestore test successful: ${data?['message']}';
+          //_firestoreTestResult = 'Firestore test successful: ${data?['message']}';
         });
       } else {
         setState(() {
@@ -122,14 +122,14 @@ class _HomePageState extends State<HomePage> {
 
               // Month and Year Navigation with Year Picker
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
                       onTap: _showYearPicker,
                       child: Text(
-                        "${_focusedDay.year} - ${_focusedDay.month.toString().padLeft(2, '0')}",
+                        "${_focusedDay.year} - ${_focusedDay.month.toString().padLeft(1, '0')}",
                         style: const TextStyle(
                           fontSize: 18,
                           color: Colors.white,
@@ -144,7 +144,7 @@ class _HomePageState extends State<HomePage> {
               // Calendar Section
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 0.0),
                   child: TableCalendar(
                     focusedDay: _focusedDay,
                     firstDay: DateTime.utc(1900, 1, 1),
@@ -185,6 +185,18 @@ class _HomePageState extends State<HomePage> {
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
+                      leftChevronIcon: Icon(
+                        Icons.chevron_left,
+                        color: Colors.white, // Changed arrow color to white
+                      ),
+                      rightChevronIcon: Icon(
+                        Icons.chevron_right,
+                        color: Colors.white, // Changed arrow color to white
+                      ),
+                    ),
+                    daysOfWeekStyle: const DaysOfWeekStyle(
+                      weekdayStyle: TextStyle(color: Colors.white), // Set weekday color to white
+                      weekendStyle: TextStyle(color: Colors.white), // Set weekend color to white
                     ),
                   ),
                 ),
