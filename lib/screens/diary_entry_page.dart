@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart'; // For kIsWeb
 
 class DiaryEntryPage extends StatefulWidget {
   final DateTime selectedDate;
@@ -17,6 +19,7 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   final List<File?> _imageList = List.filled(4, null); // Limit to 4 images
+  final List<String> _uploadedImageUrls = [];
   bool _isUpdateMode = false;
   String _confirmationMessage = '';
   bool _isSaving = false;
@@ -40,6 +43,9 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
         setState(() {
           _titleController.text = data['title'] ?? '';
           _contentController.text = data['content'] ?? '';
+          _uploadedImageUrls.clear();
+          _uploadedImageUrls.addAll(
+              (data['images'] as List<dynamic>?)?.cast<String>() ?? []);
           _isUpdateMode = true;
         });
       }
@@ -60,10 +66,14 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
       final formattedTimestamp =
           DateFormat('dd MMM yyyy @ HH:mm:ss').format(currentTime) + ' GMT';
 
+      // Upload images to Firebase Storage and get their URLs
+      final imageUrls = await _uploadImages();
+
       final data = {
         'title': _titleController.text,
         'content': _contentController.text,
         'date': formattedTimestamp,
+        'images': imageUrls, // Save image URLs to Firestore
       };
 
       if (_isUpdateMode) {
@@ -103,9 +113,35 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
     }
   }
 
+  Future<List<String>> _uploadImages() async {
+    final List<String> uploadedUrls = [];
+
+    for (var i = 0; i < _imageList.length; i++) {
+      final imageFile = _imageList[i];
+      if (imageFile != null) {
+        final fileName =
+            '${DateFormat('yyyy-MM-dd').format(widget.selectedDate)}_image_$i';
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('diaryEntries/${widget.selectedDate}/$fileName');
+
+        try {
+          final uploadTask = await ref.putFile(imageFile);
+          final imageUrl = await uploadTask.ref.getDownloadURL();
+          uploadedUrls.add(imageUrl);
+        } catch (e) {
+          debugPrint('Error uploading image: $e');
+        }
+      }
+    }
+
+    return uploadedUrls;
+  }
+
   Future<void> _attachImage(int index) async {
     try {
-      final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      final pickedFile =
+          await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile != null && mounted) {
         setState(() {
           _imageList[index] = File(pickedFile.path);
@@ -114,6 +150,68 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
     } catch (e) {
       debugPrint('Error selecting image: $e');
     }
+  }
+
+  void _deleteImage(int index) {
+    setState(() {
+      _imageList[index] = null;
+    });
+  }
+
+  Widget _buildImageWidget(File? imageFile, int index) {
+    return Stack(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          margin: const EdgeInsets.symmetric(horizontal: 5),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.lightBlueAccent, width: 2),
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.white,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: imageFile != null
+                ? (kIsWeb
+                    ? Image.network(
+                        imageFile.path,
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                      )
+                    : Image.file(
+                        imageFile,
+                        fit: BoxFit.cover,
+                        width: 60,
+                        height: 60,
+                      ))
+                : const Icon(Icons.add_photo_alternate, color: Colors.grey),
+          ),
+        ),
+        if (imageFile != null)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => _deleteImage(index),
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.close,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   @override
@@ -127,9 +225,9 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60), // Match AppBar height
+        preferredSize: const Size.fromHeight(60),
         child: Container(
-          color: const Color.fromRGBO(3, 169, 244, 1), // Match AppBar color
+          color: const Color.fromRGBO(3, 169, 244, 1),
           child: SafeArea(
             child: Row(
               children: [
@@ -140,9 +238,8 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
                   },
                   tooltip: 'Back',
                 ),
-                const SizedBox(width: 8),
                 Text(
-                  'Diary Entry: ${DateFormat('dd MMM yyyy').format(widget.selectedDate)}',
+                  "Diary Entry: ${DateFormat('dd MMM yyyy').format(widget.selectedDate)}",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -154,161 +251,123 @@ class _DiaryEntryPageState extends State<DiaryEntryPage> {
           ),
         ),
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: const Color.fromRGBO(3, 169, 244, 1), // Match background color
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-
-            // Image Slots and Central Icon
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ...List.generate(2, (index) {
-                  return GestureDetector(
-                    onTap: () => _attachImage(index),
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.lightBlueAccent, width: 2),
-                        borderRadius: BorderRadius.circular(10),
-                        image: _imageList[index] != null
-                            ? DecorationImage(
-                                image: FileImage(_imageList[index]!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        color: Colors.white,
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: const Color.fromRGBO(3, 169, 244, 1),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ...List.generate(2, (index) {
+                    return GestureDetector(
+                      onTap: () => _attachImage(index),
+                      child: _buildImageWidget(_imageList[index], index),
+                    );
+                  }),
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: const DecorationImage(
+                        image: AssetImage('lib/images/leather_diary.png'),
+                        fit: BoxFit.cover,
                       ),
-                      child: _imageList[index] == null
-                          ? const Icon(Icons.add_photo_alternate, color: Colors.grey)
-                          : null,
-                    ),
-                  );
-                }),
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: const DecorationImage(
-                      image: AssetImage('lib/images/leather_diary.png'),
-                      fit: BoxFit.cover,
-                    ),
-                    border: Border.all(
-                      color: Colors.lightBlueAccent,
-                      width: 4,
-                    ),
-                  ),
-                ),
-                ...List.generate(2, (index) {
-                  return GestureDetector(
-                    onTap: () => _attachImage(index + 2),
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.lightBlueAccent, width: 2),
-                        borderRadius: BorderRadius.circular(10),
-                        image: _imageList[index + 2] != null
-                            ? DecorationImage(
-                                image: FileImage(_imageList[index + 2]!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        color: Colors.white,
+                      border: Border.all(
+                        color: Colors.lightBlueAccent,
+                        width: 8,
                       ),
-                      child: _imageList[index + 2] == null
-                          ? const Icon(Icons.add_photo_alternate, color: Colors.grey)
-                          : null,
                     ),
-                  );
-                }),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Title Input Field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30.0)),
                   ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
+                  ...List.generate(2, (index) {
+                    return GestureDetector(
+                      onTap: () => _attachImage(index + 2),
+                      child: _buildImageWidget(_imageList[index + 2], index + 2),
+                    );
+                  }),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Content Input Field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _contentController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  labelText: 'Content',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30.0)),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _saveOrUpdateEntry,
-                  icon: const Icon(Icons.save, color: Colors.white),
-                  label: Text(
-                    _isUpdateMode ? 'Update' : 'Save',
-                    style: const TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 0, 174, 239),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(30.0)),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12.0,
-                      horizontal: 40.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-
-            // Confirmation Message
-            if (_confirmationMessage.isNotEmpty)
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  padding: const EdgeInsets.all(10.0),
-                  color: Colors.black54,
-                  child: Text(
-                    _confirmationMessage,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    filled: true,
+                    fillColor: Colors.white,
                   ),
                 ),
               ),
-          ],
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  controller: _contentController,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Content',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(30.0)),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _saveOrUpdateEntry,
+                icon: const Icon(Icons.save, color: Colors.white),
+                label: Text(
+                  _isUpdateMode ? 'Update' : 'Save',
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 0, 174, 239),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12.0,
+                    horizontal: 40.0,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (_confirmationMessage.isNotEmpty)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    padding: const EdgeInsets.all(10.0),
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    constraints: const BoxConstraints(
+                      maxWidth: 400,
+                    ),
+                    child: Text(
+                      _confirmationMessage,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
