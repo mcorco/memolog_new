@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -16,12 +15,19 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _isLoading = false;
+
   Future<void> _register() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
 
     if (email.isNotEmpty && password.isNotEmpty) {
+      setState(() {
+        _isLoading = true; // Show loading indicator
+      });
+
       try {
+        // Register the user
         UserCredential userCredential =
             await _auth.createUserWithEmailAndPassword(
           email: email,
@@ -29,32 +35,116 @@ class _RegisterPageState extends State<RegisterPage> {
         );
 
         if (userCredential.user != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
+          // Send email verification
+          await userCredential.user!.sendEmailVerification();
+
+          // Show SnackBar for successful registration
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Verification email sent. Please verify your email.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontSize: 10),
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              duration: const Duration(seconds: 3),
+              margin: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height * 0.03,
+                left: MediaQuery.of(context).size.width * 0.3,
+                right: MediaQuery.of(context).size.width * 0.3,
+              ),
+            ),
           );
+
+          // Log the user out to wait for verification
+          await _auth.signOut();
+
+          // Navigate back to login page
+          Navigator.pop(context);
         }
       } on FirebaseAuthException catch (e) {
-        String errorMessage = "An error occurred, please try again.";
+        String errorMessage = "An error occurred. Please try again.";
         if (e.code == 'email-already-in-use') {
-          errorMessage = "An account already exists with this email.";
+          errorMessage = "This email is already registered. Please use a different email.";
         } else if (e.code == 'invalid-email') {
-          errorMessage = "Invalid email address.";
+          errorMessage = "The email address entered is not valid.";
         } else if (e.code == 'weak-password') {
-          errorMessage = "The password is too weak.";
+          errorMessage = "The password is too weak. Please use a stronger password.";
         }
 
+        // Show error SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(
+            content: Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+            backgroundColor: const Color(0xFFFF0000), // Vibrant fiery red
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            duration: const Duration(seconds: 3),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height * 0.03,
+              left: MediaQuery.of(context).size.width * 0.3,
+              right: MediaQuery.of(context).size.width * 0.3,
+            ),
+          ),
         );
       } catch (e) {
+        // Show generic error SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text(
+              'Error: $e',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+            backgroundColor: const Color(0xFFFF0000), // Vibrant fiery red
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            duration: const Duration(seconds: 3),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height * 0.03,
+              left: MediaQuery.of(context).size.width * 0.3,
+              right: MediaQuery.of(context).size.width * 0.3,
+            ),
+          ),
         );
+      } finally {
+        setState(() {
+          _isLoading = false; // Hide loading indicator
+        });
       }
     } else {
+      // Show SnackBar for empty fields
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter both email and password.")),
+        SnackBar(
+          content: const Text(
+            "Please enter both email and password.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 10),
+          ),
+          backgroundColor: const Color(0xFFFF0000), // Vibrant fiery red
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          duration: const Duration(seconds: 3),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height * 0.03,
+            left: MediaQuery.of(context).size.width * 0.3,
+            right: MediaQuery.of(context).size.width * 0.3,
+          ),
+        ),
       );
     }
   }
@@ -63,9 +153,9 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60), // Consistent AppBar height
+        preferredSize: const Size.fromHeight(60),
         child: Container(
-          color: const Color.fromRGBO(3, 169, 244, 1), // Matches AppBar color
+          color: const Color.fromRGBO(3, 169, 244, 1),
           child: SafeArea(
             child: Row(
               children: [
@@ -92,15 +182,14 @@ class _RegisterPageState extends State<RegisterPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: const Color.fromRGBO(3, 169, 244, 1), // Matches background color
+        color: const Color.fromRGBO(3, 169, 244, 1),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // Align content to top
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const SizedBox(height: 40), // Add spacing for content
-                // Diary Icon
+                const SizedBox(height: 40),
                 Container(
                   width: 160,
                   height: 160,
@@ -117,8 +206,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-
-                // Email Input Field
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.33,
                   child: TextField(
@@ -136,8 +223,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Password Input Field
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.33,
                   child: TextField(
@@ -155,24 +240,25 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Register Button
-                ElevatedButton(
-                  onPressed: _register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color.fromARGB(255, 0, 174, 239), // Vibrant blue
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 16.0, horizontal: 40.0),
-                  ),
-                  child: const Text(
-                    'Register',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        onPressed: _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 0, 174, 239),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16.0,
+                            horizontal: 40.0,
+                          ),
+                        ),
+                        child: const Text(
+                          'Register',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
               ],
             ),
           ),

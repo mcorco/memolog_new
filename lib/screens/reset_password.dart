@@ -17,30 +17,103 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
     if (email.isNotEmpty) {
       try {
+        // Send password reset email
         await _auth.sendPasswordResetEmail(email: email);
+
+        // Show success SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Password reset link has been sent to your email.")),
+          SnackBar(
+            content: const Text(
+              'Password reset link has been sent to your email.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 10),
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            duration: const Duration(seconds: 3),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height * 0.03,
+              left: MediaQuery.of(context).size.width * 0.3,
+              right: MediaQuery.of(context).size.width * 0.3,
+            ),
+          ),
         );
       } on FirebaseAuthException catch (e) {
-        String errorMessage = "An error occurred, please try again.";
+        String errorMessage = "An error occurred. Please try again.";
         if (e.code == 'user-not-found') {
-          errorMessage = "No user found with this email.";
+          errorMessage = "No account found with this email.";
         } else if (e.code == 'invalid-email') {
-          errorMessage = "Invalid email address.";
+          errorMessage = "The email address entered is not valid.";
         }
 
+        // Show error SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
+          SnackBar(
+            content: Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+            backgroundColor: const Color(0xFFFF0000), // Vibrant fiery red
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            duration: const Duration(seconds: 3),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height * 0.03,
+              left: MediaQuery.of(context).size.width * 0.3,
+              right: MediaQuery.of(context).size.width * 0.3,
+            ),
+          ),
         );
       } catch (e) {
+        // Show generic error SnackBar
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text(
+              'Error: $e',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+            ),
+            backgroundColor: const Color(0xFFFF0000), // Vibrant fiery red
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            duration: const Duration(seconds: 3),
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height * 0.03,
+              left: MediaQuery.of(context).size.width * 0.3,
+              right: MediaQuery.of(context).size.width * 0.3,
+            ),
+          ),
         );
       }
     } else {
+      // Show SnackBar for empty email field
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter your email address.")),
+        SnackBar(
+          content: const Text(
+            "Please enter your email address.",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 10),
+          ),
+          backgroundColor: const Color(0xFFFF0000), // Vibrant fiery red
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          duration: const Duration(seconds: 3),
+          margin: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height * 0.03,
+            left: MediaQuery.of(context).size.width * 0.3,
+            right: MediaQuery.of(context).size.width * 0.3,
+          ),
+        ),
       );
     }
   }
@@ -49,9 +122,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60), // Set AppBar height
+        preferredSize: const Size.fromHeight(60),
         child: Container(
-          color: const Color.fromRGBO(3, 169, 244, 1), // Match AppBar color
+          color: const Color.fromRGBO(3, 169, 244, 1),
           child: SafeArea(
             child: Row(
               children: [
@@ -78,22 +151,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: const Color.fromRGBO(3, 169, 244, 1), // Set the background color
+        color: const Color.fromRGBO(3, 169, 244, 1),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start, // Change to start to lift content up
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                const SizedBox(height: 40), // Added spacing to raise icon and calendar
-                // Diary Icon Image
+                const SizedBox(height: 40),
                 Container(
                   width: 160,
                   height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: const DecorationImage(
-                      image: AssetImage('lib/images/leather_diary.png'), // Path to your diary image
+                      image: AssetImage('lib/images/leather_diary.png'),
                       fit: BoxFit.cover,
                     ),
                     border: Border.all(
@@ -102,9 +174,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32), // Reduced spacing after icon
-
-                // Email Input Field
+                const SizedBox(height: 32),
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.33,
                   child: TextField(
@@ -115,20 +185,17 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         borderRadius: BorderRadius.all(Radius.circular(30.0)),
                       ),
                       filled: true,
-                      fillColor: Colors.white, // Keep the input field white
+                      fillColor: Colors.white,
                     ),
                     keyboardType: TextInputType.emailAddress,
                     style: const TextStyle(fontSize: 16),
                   ),
                 ),
                 const SizedBox(height: 24),
-
-                // Send Reset Link Button (Updated to match other pages)
                 ElevatedButton(
                   onPressed: _resetPassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        const Color.fromARGB(255, 0, 174, 239), // Vibrant blue color for consistency
+                    backgroundColor: const Color.fromARGB(255, 0, 174, 239),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
